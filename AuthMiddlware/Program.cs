@@ -56,6 +56,7 @@ app.UseAuthorization();
 
 //app.UseCookieMiddleware();
 //app.UseSessionMiddleware();
+app.UseJwtMiddleware();
 
 app.MapControllerRoute(
     name: "default",

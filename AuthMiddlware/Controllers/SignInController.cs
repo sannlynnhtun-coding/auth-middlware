@@ -55,6 +55,7 @@ namespace AuthMiddlware.Controllers
                     Subject = new ClaimsIdentity(new[]
                     {
                         new Claim("Id", Guid.NewGuid().ToString()),
+                        new Claim("SessionExpired", DateTime.Now.AddMinutes(15).ToString("o")),
                         new Claim(JwtRegisteredClaimNames.Email, user.Email),
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                     }),
