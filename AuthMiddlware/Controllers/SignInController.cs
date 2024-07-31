@@ -28,7 +28,7 @@ namespace AuthMiddlware.Controllers
             string password = user.Password.ToHashPassword(user.Email, "123");
             if (user.Email == "slh@gmail.com"
                 //&& user.Password == "123"
-                && password == "e2632eb61f4d9e6e8c223429bdf6ec4aa14cd67c3fb16c5a50ed413f95973d67"
+                && password == "192193cce00ee219a27de7a7fd4ee5d53f4cc93dd2a1120eab528b2c32b08228"
                 )
             {
                 #region Session
@@ -55,6 +55,7 @@ namespace AuthMiddlware.Controllers
                     Subject = new ClaimsIdentity(new[]
                     {
                         new Claim("Id", Guid.NewGuid().ToString()),
+                        //new Claim("SessionExpired", DateTime.Now.AddMinutes(15).ToString("o")),
                         new Claim("SessionExpired", DateTime.Now.AddMinutes(15).ToString("o")),
                         new Claim(JwtRegisteredClaimNames.Email, user.Email),
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -71,7 +72,8 @@ namespace AuthMiddlware.Controllers
                 var jwtToken = tokenHandler.WriteToken(token);
                 HttpContext.Response.Headers.Append("jwt_token", jwtToken);
                 HttpContext.Response.Cookies.Append("jwt_token", jwtToken, options);
-
+                HttpContext.Session.SetString("jwt_token",jwtToken);
+                var jwt = HttpContext.Session.GetString("jwt_token");
                 #endregion
 
                 return RedirectToAction("Index", "Home");
