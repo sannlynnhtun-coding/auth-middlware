@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -28,6 +32,10 @@
                     </ul>
                 </div>
             </div>
+            @if (!string.IsNullOrWhiteSpace(email))
+            {
+                <a asp-controller="SignIn" asp-action="Logout" class="nav-link">Logout</a>
+            }
         </nav>
     </header>
     <div class="container">

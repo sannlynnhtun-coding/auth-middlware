@@ -1,51 +1,45 @@
-﻿namespace AuthMiddlware.Middlewares
+﻿using System.Security.Claims;
+
+namespace AuthMiddlware.Middlewares;
+
+public class SessionMiddleware
 {
-    public class SessionMiddleware
+    private readonly RequestDelegate _next;
+    private readonly List<string> passUrlList = new() { "/SignIn/Index" };
+
+    public SessionMiddleware(RequestDelegate next) => _next = next;
+
+    public async Task InvokeAsync(HttpContext context)
     {
-        private readonly RequestDelegate _next;
+        string url = context.Request.Path;
 
-        public SessionMiddleware(RequestDelegate next)
+        if (passUrlList.Any(x => x.Equals(url, StringComparison.OrdinalIgnoreCase)))
         {
-            _next = next;
-        }
-
-        string signInUrl = "/SignIn/Index";
-        List<string> passUrlList = new List<string>
-        {
-            "/SignIn/Index",
-        };
-        public async Task InvokeAsync(HttpContext context)
-        {
-            string url = context.Request.Path;
-            if (passUrlList.Count(x => x.ToLower() == url.ToLower()) > 0 || url.ToLower() == signInUrl.ToLower())
-                goto Result;
-
-            #region Check Session
-
-            if (string.IsNullOrWhiteSpace(context.Session.GetString("email")))
-            {
-                context.Response.Redirect(signInUrl);
-            }
-
-            var email = context.Session.GetString("email");
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                context.Response.Redirect(signInUrl);
-            }
-
-            #endregion
-
-            Result:
-            // Call the next delegate/middleware in the pipeline.
             await _next(context);
+            return;
         }
-    }
 
-    public static class SessionMiddlewareExtension
-    {
-        public static IApplicationBuilder UseSessionMiddleware(this IApplicationBuilder app)
+        //if (!context.User.Identity!.IsAuthenticated)
+        //{
+        //    context.Response.Redirect("/SignIn/Index");
+        //    return;
+        //}
+
+        var expiresStr = context.User.FindFirstValue("session_expires");
+        if (!DateTimeOffset.TryParse(expiresStr, out var expires) || expires < DateTime.Now)
         {
-            return app.UseMiddleware<SessionMiddleware>();
+            context.Response.Redirect("/SignIn/Index");
+            return;
         }
+
+        await _next(context);
+    }
+}
+
+public static class SessionMiddlewareExtension
+{
+    public static IApplicationBuilder UseSessionMiddleware(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<SessionMiddleware>();
     }
 }

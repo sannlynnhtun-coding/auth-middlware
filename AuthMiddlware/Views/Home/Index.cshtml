@@ -1,6 +1,12 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+    var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+    var expiresStr = User.FindFirst("session_expires")?.Value!;
+    DateTimeOffset expires = DateTimeOffset.Parse(expiresStr);
 }
+
+<p>Welcome @email</p>
+<p>Your session expires at: @expires.LocalDateTime</p>
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
