@@ -5,7 +5,7 @@ namespace AuthMiddlware.Middlewares;
 public class AuthMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly List<string> passUrlList = new() { "/SignIn/Index" };
+    private readonly List<string> passUrlList = new() { "/", "/SignIn", "/SignIn/Index" };
 
     public AuthMiddleware(RequestDelegate next) => _next = next;
 
