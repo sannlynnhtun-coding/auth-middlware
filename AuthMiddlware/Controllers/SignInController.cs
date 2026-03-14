@@ -1,4 +1,5 @@
-﻿using AuthMiddlware.Models;
+using AuthMiddlware.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,6 +9,7 @@ using System.Text;
 
 namespace AuthMiddlware.Controllers
 {
+    [AllowAnonymous]
     public class SignInController : Controller
     {
         private readonly IConfiguration _configuration;
@@ -28,7 +30,7 @@ namespace AuthMiddlware.Controllers
             string password = user.Password.ToHashPassword(user.Email, "123");
             if (user.Email == "slh@gmail.com"
                 //&& user.Password == "123"
-                && password == "192193cce00ee219a27de7a7fd4ee5d53f4cc93dd2a1120eab528b2c32b08228"
+                && password == "e2632eb61f4d9e6e8c223429bdf6ec4aa14cd67c3fb16c5a50ed413f95973d67"
                 )
             {
                 #region Session

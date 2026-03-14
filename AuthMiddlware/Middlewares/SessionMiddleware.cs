@@ -1,43 +1,62 @@
-﻿namespace AuthMiddlware.Middlewares
+using AuthMiddlware.Options;
+using Microsoft.Extensions.Options;
+
+namespace AuthMiddlware.Middlewares
 {
+    // Legacy middleware retained for reference. Runtime strategy now uses SessionAuthFilter (IAsyncActionFilter).
     public class SessionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly HashSet<string> _bypassPaths;
 
-        public SessionMiddleware(RequestDelegate next)
+        public SessionMiddleware(RequestDelegate next, IOptions<AuthStrategyOptions> authOptions)
         {
             _next = next;
+            _bypassPaths = BuildBypassPathSet(authOptions.Value.BypassPaths);
         }
 
-        string signInUrl = "/SignIn/Index";
-        List<string> passUrlList = new List<string>
-        {
-            "/SignIn/Index",
-        };
+        private const string SignInUrl = "/SignIn/Index";
+
         public async Task InvokeAsync(HttpContext context)
         {
-            string url = context.Request.Path;
-            if (passUrlList.Count(x => x.ToLower() == url.ToLower()) > 0 || url.ToLower() == signInUrl.ToLower())
-                goto Result;
-
-            #region Check Session
-
-            if (string.IsNullOrWhiteSpace(context.Session.GetString("email")))
+            var url = context.Request.Path.Value ?? string.Empty;
+            if (IsBypassed(url))
             {
-                context.Response.Redirect(signInUrl);
+                await _next(context);
+                return;
             }
 
             var email = context.Session.GetString("email");
             if (string.IsNullOrWhiteSpace(email))
             {
-                context.Response.Redirect(signInUrl);
+                context.Response.Redirect(SignInUrl);
+                return;
             }
 
-            #endregion
-
-            Result:
-            // Call the next delegate/middleware in the pipeline.
             await _next(context);
+        }
+
+        private bool IsBypassed(string url)
+        {
+            return _bypassPaths.Contains(url);
+        }
+
+        private static HashSet<string> BuildBypassPathSet(IEnumerable<string> bypassPaths)
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                SignInUrl
+            };
+
+            foreach (var path in bypassPaths)
+            {
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    set.Add(path.Trim());
+                }
+            }
+
+            return set;
         }
     }
 

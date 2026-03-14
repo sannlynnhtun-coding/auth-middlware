@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+using AuthMiddlware.Options;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -6,99 +7,125 @@ using System.Text;
 
 namespace AuthMiddlware.Middlewares
 {
+    // Legacy middleware retained for reference. Runtime strategy now uses JwtAuthAttribute/JwtCookieAuthFilter (IAsyncActionFilter).
     public class JwtTokenMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly IConfiguration _configuration;
+        private readonly HashSet<string> _bypassPaths;
 
-        public JwtTokenMiddleware(RequestDelegate next, IConfiguration configuration)
+        public JwtTokenMiddleware(RequestDelegate next, IConfiguration configuration, IOptions<AuthStrategyOptions> authOptions)
         {
             _next = next;
             _configuration = configuration;
+            _bypassPaths = BuildBypassPathSet(authOptions.Value.BypassPaths);
         }
 
-        string signInUrl = "/SignIn/Index";
-        List<string> passUrlList = new List<string>
-        {
-            "/SignIn/Index",
-        };
+        private const string SignInUrl = "/SignIn/Index";
+
         public async Task InvokeAsync(HttpContext context)
         {
-            string url = context.Request.Path;
-            if (passUrlList.Count(x =>
-                x.ToLower() == url.ToLower()) > 0 ||
-                url.ToLower() == signInUrl.ToLower())
-                goto Result;
+            var url = context.Request.Path.Value ?? string.Empty;
+            if (IsBypassed(url))
+            {
+                await _next(context);
+                return;
+            }
 
             var jwtToken = context.Request.Cookies["jwt_token"];
             if (string.IsNullOrWhiteSpace(jwtToken))
             {
-                context.Response.Redirect(signInUrl);
-                goto Result;
+                context.Response.Redirect(SignInUrl);
+                return;
             }
 
-            var handler = new JwtSecurityTokenHandler();
-            var decodedToken = handler.ReadJwtToken(jwtToken);
-            //foreach (var claim in decodedToken.Claims)
-            //{
-            //    Console.WriteLine($"Claim Type: {claim.Type}, Value: {claim.Value}");
-            //}
-
-            var item = decodedToken.Claims.FirstOrDefault(x => x.Type == "SessionExpired");
-            DateTime tokenSessionExpired = Convert.ToDateTime(item?.Value);
-            if (item is null || DateTime.Now > tokenSessionExpired)
+            JwtSecurityToken decodedToken;
+            try
             {
-                context.Response.Redirect(signInUrl);
-                goto Result;
+                var handler = new JwtSecurityTokenHandler();
+                decodedToken = handler.ReadJwtToken(jwtToken);
             }
-
-            //DateTime tokenSessionExpired = Convert.ToDateTime(item?.Value).ToUniversalTime();
-            //if (item is null || DateTime.UtcNow > tokenSessionExpired)
-            //{
-            //    context.Response.Redirect(signInUrl);
-            //    goto Result;
-            //}
-
-            var itemEmail = decodedToken.Claims.FirstOrDefault(x => x.Type == "email");
-            if (itemEmail is null)
+            catch
             {
-                context.Response.Redirect(signInUrl);
-                goto Result;
+                context.Response.Redirect(SignInUrl);
+                return;
             }
 
-            if (_configuration == null) goto Result;
+            var sessionClaim = decodedToken.Claims.FirstOrDefault(x => x.Type == "SessionExpired");
+            var canParseExpiry = DateTime.TryParse(sessionClaim?.Value, out var tokenSessionExpired);
+            if (!canParseExpiry || DateTime.Now > tokenSessionExpired)
+            {
+                context.Response.Redirect(SignInUrl);
+                return;
+            }
+
+            var emailClaim = decodedToken.Claims.FirstOrDefault(x => x.Type == "email");
+            if (emailClaim is null)
+            {
+                context.Response.Redirect(SignInUrl);
+                return;
+            }
 
             var issuer = _configuration["Jwt:Issuer"];
             var audience = _configuration["Jwt:Audience"];
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
+            var keyValue = _configuration["Jwt:Key"];
+            if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience) || string.IsNullOrWhiteSpace(keyValue))
+            {
+                context.Response.Redirect(SignInUrl);
+                return;
+            }
+
+            var key = Encoding.ASCII.GetBytes(keyValue);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                        new Claim("Id", Guid.NewGuid().ToString()),
-                        new Claim("SessionExpired", DateTime.UtcNow.AddSeconds(5).ToString("o")),
-                        new Claim(JwtRegisteredClaimNames.Email, itemEmail.Value),
-                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                    }),
+                    new Claim("Id", Guid.NewGuid().ToString()),
+                    new Claim("SessionExpired", DateTime.UtcNow.AddSeconds(5).ToString("o")),
+                    new Claim(JwtRegisteredClaimNames.Email, emailClaim.Value),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                }),
                 Expires = DateTime.UtcNow.AddMinutes(10),
                 Issuer = issuer,
                 Audience = audience,
-                SigningCredentials = new SigningCredentials
-                (new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha512Signature)
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha512Signature)
             };
+
             var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            jwtToken = tokenHandler.WriteToken(token);
+            var refreshedJwt = tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
 
-            CookieOptions options = new CookieOptions();
-            options.Expires = DateTime.Now.AddMinutes(1);
+            var cookieOptions = new CookieOptions
+            {
+                Expires = DateTime.Now.AddMinutes(1)
+            };
+            context.Response.Cookies.Append("jwt_token", refreshedJwt, cookieOptions);
 
-            context.Response.Cookies.Append("jwt_token", jwtToken, options);
-
-        Result:
-            // Call the next delegate/middleware in the pipeline.
             await _next(context);
+        }
+
+        private bool IsBypassed(string url)
+        {
+            return _bypassPaths.Contains(url);
+        }
+
+        private static HashSet<string> BuildBypassPathSet(IEnumerable<string> bypassPaths)
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                SignInUrl
+            };
+
+            foreach (var path in bypassPaths)
+            {
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    set.Add(path.Trim());
+                }
+            }
+
+            return set;
         }
     }
 

@@ -1,54 +1,62 @@
-﻿using System;
+using AuthMiddlware.Options;
+using Microsoft.Extensions.Options;
 
 namespace AuthMiddlware.Middlewares
 {
+    // Legacy middleware retained for reference. Runtime strategy now uses CookieAuthFilter (IAsyncActionFilter).
     public class CookieMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly HashSet<string> _bypassPaths;
 
-        public CookieMiddleware(RequestDelegate next)
+        public CookieMiddleware(RequestDelegate next, IOptions<AuthStrategyOptions> authOptions)
         {
             _next = next;
+            _bypassPaths = BuildBypassPathSet(authOptions.Value.BypassPaths);
         }
 
-        string signInUrl = "/SignIn/Index";
-        List<string> passUrlList = new List<string>
-        {
-            "/SignIn/Index",
-        };
+        private const string SignInUrl = "/SignIn/Index";
+
         public async Task InvokeAsync(HttpContext context)
         {
-            //var password = context.Session.GetString("password");
-            string url = context.Request.Path;
-            if (passUrlList.Count(x => x.ToLower() == url.ToLower()) > 0 || url.ToLower() == signInUrl.ToLower())
-                goto Result;
+            var url = context.Request.Path.Value ?? string.Empty;
+            if (IsBypassed(url))
+            {
+                await _next(context);
+                return;
+            }
 
             var email = context.Request.Cookies["email"];
             if (string.IsNullOrWhiteSpace(email))
             {
-                context.Response.Redirect(signInUrl);
+                context.Response.Redirect(SignInUrl);
+                return;
             }
-        //if (passUrlList.Count(x => x.ToLower() == url.ToLower()) > 0 || url.ToLower() == signInUrl.ToLower())
-        //    goto Result;
 
-        //#region Check Session
-
-        //if (string.IsNullOrWhiteSpace(context.Session.GetString("email")))
-        //{
-        //    context.Response.Redirect(signInUrl);
-        //}
-
-        //var email = context.Session.GetString("email");
-        //if (string.IsNullOrWhiteSpace(email))
-        //{
-        //    context.Response.Redirect(signInUrl);
-        //}
-
-        //#endregion
-
-        Result:
-            // Call the next delegate/middleware in the pipeline.
             await _next(context);
+        }
+
+        private bool IsBypassed(string url)
+        {
+            return _bypassPaths.Contains(url);
+        }
+
+        private static HashSet<string> BuildBypassPathSet(IEnumerable<string> bypassPaths)
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                SignInUrl
+            };
+
+            foreach (var path in bypassPaths)
+            {
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    set.Add(path.Trim());
+                }
+            }
+
+            return set;
         }
     }
 
