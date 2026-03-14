@@ -9,9 +9,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --ink: #071129;
+            --sky: #ecf4ff;
+            --mist: #f8fbff;
+        }
+
         body {
             font-family: 'Space Grotesk', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #2563eb 100%);
+            color: var(--ink);
+            background: radial-gradient(circle at 20% 0%, #dbeafe 0%, #f8fbff 45%, #f0f7ff 100%);
         }
 
         .mono {
@@ -19,14 +26,14 @@
         }
     </style>
 </head>
-<body class="min-h-screen text-slate-100">
+<body class="min-h-screen">
     <div class="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-8 sm:px-6">
         <div class="mb-8 flex items-center justify-between">
-            <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/20">
-                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-900">A</span>
+            <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">A</span>
                 Auth Learning Lab
             </a>
-            <a asp-controller="Home" asp-action="Privacy" class="rounded-full border border-white/30 px-4 py-2 text-sm font-medium transition hover:bg-white/10">How It Works</a>
+            <a asp-controller="Home" asp-action="Privacy" class="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">How It Works</a>
         </div>
 
         <div class="flex flex-1 items-center justify-center">

@@ -5,47 +5,47 @@
 }
 
 <div class="grid w-full max-w-5xl gap-6 lg:grid-cols-2">
-    <section class="rounded-3xl border border-white/25 bg-white/10 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-        <h1 class="text-2xl font-bold sm:text-3xl">Beginner Demo Sign-In</h1>
-        <p class="mt-2 text-sm text-blue-100/90">Just click <span class="font-semibold text-white">Run 1-Click Demo</span> to create session, cookie, and JWT token automatically.</p>
+    <section class="rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-lg shadow-blue-100/50 sm:p-8">
+        <h1 class="text-2xl font-bold text-slate-900 sm:text-3xl">Beginner Demo Sign-In</h1>
+        <p class="mt-2 text-sm text-slate-600">Just click <span class="font-semibold text-slate-900">Run 1-Click Demo</span> to create session, cookie, and JWT token automatically.</p>
 
         @if (ViewData["ErrorMessage"] is string message)
         {
-            <div class="mt-4 rounded-xl border border-rose-300/60 bg-rose-500/20 px-4 py-3 text-sm text-rose-100">@message</div>
+            <div class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">@message</div>
         }
 
         <form id="demo-signin-form" method="post" asp-controller="SignIn" asp-action="Index" class="mt-6 space-y-4">
             <div>
-                <label for="Email" class="mb-1 block text-sm font-medium text-blue-100">Email</label>
-                <input id="Email" name="Email" type="email" value="@Model.Email" class="w-full rounded-xl border border-white/30 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" autocomplete="username" />
+                <label for="Email" class="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                <input id="Email" name="Email" type="email" value="@Model.Email" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" autocomplete="username" />
             </div>
             <div>
-                <label for="Password" class="mb-1 block text-sm font-medium text-blue-100">Password</label>
-                <input id="Password" name="Password" type="password" value="@Model.Password" class="w-full rounded-xl border border-white/30 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" autocomplete="current-password" />
+                <label for="Password" class="mb-1 block text-sm font-medium text-slate-700">Password</label>
+                <input id="Password" name="Password" type="password" value="@Model.Password" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" autocomplete="current-password" />
             </div>
 
             <div class="grid gap-3 sm:grid-cols-2">
-                <button type="submit" class="rounded-xl border border-white/40 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
+                <button type="submit" class="rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-200">
                     Sign In Normally
                 </button>
-                <button type="button" id="one-click-demo" class="rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-300">
+                <button type="button" id="one-click-demo" class="rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
                     Run 1-Click Demo
                 </button>
             </div>
         </form>
 
-        <p class="mono mt-4 text-xs text-blue-100/80">Demo credential: slh@gmail.com / 123</p>
+        <p class="mono mt-4 text-xs text-slate-500">Demo credential: slh@gmail.com / 123</p>
     </section>
 
-    <section class="rounded-3xl border border-white/25 bg-white/10 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-        <h2 class="text-xl font-semibold">What Happens After Click</h2>
-        <ol class="mt-4 space-y-3 text-sm text-blue-50/90">
-            <li class="rounded-xl bg-white/10 p-3"><span class="font-semibold text-white">1.</span> Login credential is validated in <span class="mono">SignInController</span>.</li>
-            <li class="rounded-xl bg-white/10 p-3"><span class="font-semibold text-white">2.</span> Server stores <span class="mono">Session["email"]</span> and writes <span class="mono">email</span> cookie.</li>
-            <li class="rounded-xl bg-white/10 p-3"><span class="font-semibold text-white">3.</span> Server creates <span class="mono">jwt_token</span> cookie with claims.</li>
-            <li class="rounded-xl bg-white/10 p-3"><span class="font-semibold text-white">4.</span> You are redirected to Dashboard and see decoded claims immediately.</li>
+    <section class="rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-lg shadow-blue-100/50 sm:p-8">
+        <h2 class="text-xl font-semibold text-slate-900">What Happens After Click</h2>
+        <ol class="mt-4 space-y-3 text-sm text-slate-700">
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-3"><span class="font-semibold text-slate-900">1.</span> Login credential is validated in <span class="mono">SignInController</span>.</li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-3"><span class="font-semibold text-slate-900">2.</span> Server stores <span class="mono">Session["email"]</span> and writes <span class="mono">email</span> cookie.</li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-3"><span class="font-semibold text-slate-900">3.</span> Server creates <span class="mono">jwt_token</span> cookie with claims.</li>
+            <li class="rounded-xl border border-slate-200 bg-slate-50 p-3"><span class="font-semibold text-slate-900">4.</span> You are redirected to Dashboard and see decoded claims immediately.</li>
         </ol>
-        <div class="mt-6 rounded-xl border border-amber-300/50 bg-amber-300/20 p-4 text-xs text-amber-50">
+        <div class="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs text-slate-700">
             Tip: Edit email/password and try failure path to understand validation.
         </div>
     </section>
