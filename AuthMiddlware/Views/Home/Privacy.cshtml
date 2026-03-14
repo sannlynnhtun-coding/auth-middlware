@@ -1,6 +1,20 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "How It Works";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="mx-auto max-w-3xl rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-lg shadow-blue-100/50 sm:p-8">
+    <h1 class="text-2xl font-bold text-slate-900">How This Beginner Demo Works</h1>
+    <p class="mt-3 text-sm text-slate-600">This project is intentionally simple: sign in, create auth artifacts, and immediately inspect them on the dashboard.</p>
+
+    <div class="mt-6 space-y-3 text-sm text-slate-700">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4"><span class="font-semibold">Step 1:</span> Sign in with demo credential <span class="mono">slh@gmail.com / 123</span>.</div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4"><span class="font-semibold">Step 2:</span> Server writes session, cookie, and JWT token.</div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4"><span class="font-semibold">Step 3:</span> Controller attributes validate each request for Cookie/Session/JWT paths.</div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4"><span class="font-semibold">Step 4:</span> Dashboard decodes claims so beginners can see payload details.</div>
+    </div>
+
+    <div class="mt-6 flex flex-wrap gap-3">
+        <a asp-controller="SignIn" asp-action="Index" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Run Demo</a>
+        <a asp-controller="Home" asp-action="Index" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Back to Dashboard</a>
+    </div>
+</div>

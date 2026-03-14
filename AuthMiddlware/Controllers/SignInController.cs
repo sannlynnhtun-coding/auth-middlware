@@ -21,7 +21,11 @@ namespace AuthMiddlware.Controllers
 
         public IActionResult Index()
         {
-            return View(new UserModel());
+            return View(new UserModel
+            {
+                Email = "slh@gmail.com",
+                Password = "123"
+            });
         }
 
         [HttpPost]
@@ -29,25 +33,14 @@ namespace AuthMiddlware.Controllers
         {
             string password = user.Password.ToHashPassword(user.Email, "123");
             if (user.Email == "slh@gmail.com"
-                //&& user.Password == "123"
                 && password == "e2632eb61f4d9e6e8c223429bdf6ec4aa14cd67c3fb16c5a50ed413f95973d67"
                 )
             {
-                #region Session
-
-                HttpContext.Session.SetString("email", user.Email); // server session
-
-                #endregion
-
-                #region Cookie
+                HttpContext.Session.SetString("email", user.Email);
 
                 CookieOptions options = new CookieOptions();
                 options.Expires = DateTime.Now.AddMinutes(1);
                 HttpContext.Response.Cookies.Append("email", user.Email, options);
-
-                #endregion
-
-                #region Jwt
 
                 var issuer = _configuration["Jwt:Issuer"];
                 var audience = _configuration["Jwt:Audience"];
@@ -57,7 +50,6 @@ namespace AuthMiddlware.Controllers
                     Subject = new ClaimsIdentity(new[]
                     {
                         new Claim("Id", Guid.NewGuid().ToString()),
-                        //new Claim("SessionExpired", DateTime.Now.AddMinutes(15).ToString("o")),
                         new Claim("SessionExpired", DateTime.Now.AddMinutes(15).ToString("o")),
                         new Claim(JwtRegisteredClaimNames.Email, user.Email),
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -74,12 +66,12 @@ namespace AuthMiddlware.Controllers
                 var jwtToken = tokenHandler.WriteToken(token);
                 HttpContext.Response.Headers.Append("jwt_token", jwtToken);
                 HttpContext.Response.Cookies.Append("jwt_token", jwtToken, options);
-                HttpContext.Session.SetString("jwt_token",jwtToken);
-                var jwt = HttpContext.Session.GetString("jwt_token");
-                #endregion
+                HttpContext.Session.SetString("jwt_token", jwtToken);
 
                 return RedirectToAction("Index", "Home");
             }
+
+            ViewData["ErrorMessage"] = "Demo login failed. Use the prefilled credentials and click Run Demo.";
             return View(user);
         }
     }
@@ -88,9 +80,7 @@ namespace AuthMiddlware.Controllers
     {
         public static string ToHashPassword(this string password, string userName, string secretKey)
         {
-            // Create a SHA256   
             using SHA256 sha256Hash = SHA256.Create();
-            // ComputeHash - returns byte array  
             byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(
                 password +
                 userName
@@ -98,7 +88,6 @@ namespace AuthMiddlware.Controllers
                 .Replace("l", "!") +
                 secretKey));
 
-            // Convert byte array to a string   
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < bytes.Length; i++)
             {

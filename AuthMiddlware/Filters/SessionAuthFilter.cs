@@ -15,7 +15,7 @@ namespace AuthMiddlware.Filters
             var email = context.HttpContext.Session.GetString("email");
             if (string.IsNullOrWhiteSpace(email))
             {
-                AuthFilterHelpers.RedirectToSignIn(context);
+                AuthFilterHelpers.SetJsonAuthFailure(context, "session", "Session check failed. Please run demo sign-in first.");
                 return;
             }
 

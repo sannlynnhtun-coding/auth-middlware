@@ -15,7 +15,7 @@ namespace AuthMiddlware.Filters
             var email = context.HttpContext.Request.Cookies["email"];
             if (string.IsNullOrWhiteSpace(email))
             {
-                AuthFilterHelpers.RedirectToSignIn(context);
+                AuthFilterHelpers.SetJsonAuthFailure(context, "cookie", "Cookie check failed. Please run demo sign-in first.");
                 return;
             }
 

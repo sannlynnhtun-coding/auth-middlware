@@ -10,7 +10,13 @@ namespace AuthMiddlware.Controllers
         [HttpGet]
         public IActionResult Protected()
         {
-            return Ok("Session protected OK");
+            return Ok(new
+            {
+                success = true,
+                filter = "session",
+                message = "Session filter check passed.",
+                timestampUtc = DateTime.UtcNow
+            });
         }
 
         [AllowAnonymous]
@@ -18,7 +24,14 @@ namespace AuthMiddlware.Controllers
         public IActionResult SetupSession()
         {
             HttpContext.Session.SetString("email", "session-test@example.com");
-            return Ok("Session setup complete");
+
+            return Ok(new
+            {
+                success = true,
+                filter = "session",
+                message = "Session setup complete.",
+                timestampUtc = DateTime.UtcNow
+            });
         }
     }
 }

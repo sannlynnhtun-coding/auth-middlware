@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
+using System.Text.Json;
 using Xunit;
 
 namespace AuthMiddlware.Tests;
@@ -8,75 +11,108 @@ namespace AuthMiddlware.Tests;
 public class AuthStrategyIntegrationTests
 {
     [Fact]
-    public async Task Cookie_ProtectedWithoutCookie_RedirectsToSignIn()
+    public async Task Cookie_ProtectedWithoutCookie_ReturnsUnauthorizedJson()
     {
         await using var factory = CreateFactory();
         using var client = CreateClient(factory);
 
         var response = await client.GetAsync("/CookieTest/Protected");
+        var payload = await ReadJsonAsync(response);
 
-        AssertRedirectToSignIn(response);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.False(payload.Success);
+        Assert.Equal("cookie", payload.Filter);
+        Assert.Equal(401, payload.StatusCode);
     }
 
     [Fact]
-    public async Task Cookie_SetupThenProtected_ReturnsOk()
+    public async Task Cookie_SetupThenProtected_ReturnsOkJson()
     {
         await using var factory = CreateFactory();
         using var client = CreateClient(factory);
 
         var setup = await client.GetAsync("/CookieTest/SetupCookie");
+        var setupPayload = await ReadJsonAsync(setup);
         var protectedResponse = await client.GetAsync("/CookieTest/Protected");
+        var protectedPayload = await ReadJsonAsync(protectedResponse);
 
         Assert.Equal(HttpStatusCode.OK, setup.StatusCode);
+        Assert.True(setupPayload.Success);
+        Assert.Equal("cookie", setupPayload.Filter);
+
         Assert.Equal(HttpStatusCode.OK, protectedResponse.StatusCode);
+        Assert.True(protectedPayload.Success);
+        Assert.Equal("cookie", protectedPayload.Filter);
     }
 
     [Fact]
-    public async Task Session_ProtectedWithoutSession_RedirectsToSignIn()
+    public async Task Session_ProtectedWithoutSession_ReturnsUnauthorizedJson()
     {
         await using var factory = CreateFactory();
         using var client = CreateClient(factory);
 
         var response = await client.GetAsync("/SessionTest/Protected");
+        var payload = await ReadJsonAsync(response);
 
-        AssertRedirectToSignIn(response);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.False(payload.Success);
+        Assert.Equal("session", payload.Filter);
+        Assert.Equal(401, payload.StatusCode);
     }
 
     [Fact]
-    public async Task Session_SetupThenProtected_ReturnsOk()
+    public async Task Session_SetupThenProtected_ReturnsOkJson()
     {
         await using var factory = CreateFactory();
         using var client = CreateClient(factory);
 
         var setup = await client.GetAsync("/SessionTest/SetupSession");
+        var setupPayload = await ReadJsonAsync(setup);
         var protectedResponse = await client.GetAsync("/SessionTest/Protected");
+        var protectedPayload = await ReadJsonAsync(protectedResponse);
 
         Assert.Equal(HttpStatusCode.OK, setup.StatusCode);
+        Assert.True(setupPayload.Success);
+        Assert.Equal("session", setupPayload.Filter);
+
         Assert.Equal(HttpStatusCode.OK, protectedResponse.StatusCode);
+        Assert.True(protectedPayload.Success);
+        Assert.Equal("session", protectedPayload.Filter);
     }
 
     [Fact]
-    public async Task Jwt_ProtectedWithoutToken_RedirectsToSignIn()
+    public async Task Jwt_ProtectedWithoutToken_ReturnsUnauthorizedJson()
     {
         await using var factory = CreateFactory();
         using var client = CreateClient(factory);
 
         var response = await client.GetAsync("/JwtTest/Protected");
+        var payload = await ReadJsonAsync(response);
 
-        AssertRedirectToSignIn(response);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.False(payload.Success);
+        Assert.Equal("jwt", payload.Filter);
+        Assert.Equal(401, payload.StatusCode);
     }
 
     [Fact]
-    public async Task Jwt_SetupThenProtected_ReturnsOkAndRefreshesTokenCookie()
+    public async Task Jwt_SetupThenProtected_ReturnsOkJsonAndRefreshesTokenCookie()
     {
         await using var factory = CreateFactory();
         using var client = CreateClient(factory);
 
         var setup = await client.GetAsync("/JwtTest/SetupJwt");
+        var setupPayload = await ReadJsonAsync(setup);
         var protectedResponse = await client.GetAsync("/JwtTest/Protected");
+        var protectedPayload = await ReadJsonAsync(protectedResponse);
 
         Assert.Equal(HttpStatusCode.OK, setup.StatusCode);
+        Assert.True(setupPayload.Success);
+        Assert.Equal("jwt", setupPayload.Filter);
+
         Assert.Equal(HttpStatusCode.OK, protectedResponse.StatusCode);
+        Assert.True(protectedPayload.Success);
+        Assert.Equal("jwt", protectedPayload.Filter);
 
         var hasJwtSetCookie = protectedResponse.Headers.TryGetValues("Set-Cookie", out var setCookies)
             && setCookies.Any(x => x.Contains("jwt_token=", StringComparison.OrdinalIgnoreCase));
@@ -100,6 +136,10 @@ public class AuthStrategyIntegrationTests
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Testing");
+            builder.ConfigureServices(services =>
+            {
+                services.AddSingleton<IDataProtectionProvider>(_ => new EphemeralDataProtectionProvider());
+            });
         });
     }
 
@@ -113,15 +153,27 @@ public class AuthStrategyIntegrationTests
         });
     }
 
-    private static void AssertRedirectToSignIn(HttpResponseMessage response)
+    private static async Task<FilterResponse> ReadJsonAsync(HttpResponseMessage response)
     {
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.NotNull(response.Headers.Location);
+        var json = await response.Content.ReadAsStringAsync();
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
-        var location = response.Headers.Location!.OriginalString;
-        Assert.True(
-            location.Equals("/", StringComparison.OrdinalIgnoreCase) ||
-            location.EndsWith("/SignIn/Index", StringComparison.OrdinalIgnoreCase),
-            $"Expected redirect to '/' or '/SignIn/Index' but got '{location}'.");
+        var payload = JsonSerializer.Deserialize<FilterResponse>(json, options);
+        Assert.NotNull(payload);
+        return payload!;
+    }
+
+    private sealed class FilterResponse
+    {
+        public bool Success { get; set; }
+        public string Filter { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public int? StatusCode { get; set; }
+        public DateTime TimestampUtc { get; set; }
     }
 }
+
+

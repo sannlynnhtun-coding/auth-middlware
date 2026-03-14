@@ -26,7 +26,7 @@ namespace AuthMiddlware.Filters
             var jwtToken = context.HttpContext.Request.Cookies["jwt_token"];
             if (string.IsNullOrWhiteSpace(jwtToken))
             {
-                AuthFilterHelpers.RedirectToSignIn(context);
+                AuthFilterHelpers.SetJsonAuthFailure(context, "jwt", "JWT token not found. Please run demo sign-in first.");
                 return;
             }
 
@@ -38,7 +38,7 @@ namespace AuthMiddlware.Filters
             }
             catch
             {
-                AuthFilterHelpers.RedirectToSignIn(context);
+                AuthFilterHelpers.SetJsonAuthFailure(context, "jwt", "JWT token is invalid. Please sign in again.");
                 return;
             }
 
@@ -46,21 +46,21 @@ namespace AuthMiddlware.Filters
             var canParseExpiry = DateTime.TryParse(sessionExpiredClaim?.Value, out var tokenSessionExpired);
             if (!canParseExpiry || DateTime.Now > tokenSessionExpired)
             {
-                AuthFilterHelpers.RedirectToSignIn(context);
+                AuthFilterHelpers.SetJsonAuthFailure(context, "jwt", "JWT token expired. Please run demo sign-in again.");
                 return;
             }
 
             var emailClaim = decodedToken.Claims.FirstOrDefault(x => x.Type == "email");
             if (emailClaim is null)
             {
-                AuthFilterHelpers.RedirectToSignIn(context);
+                AuthFilterHelpers.SetJsonAuthFailure(context, "jwt", "JWT email claim is missing.");
                 return;
             }
 
             var keyValue = _configuration["Jwt:Key"];
             if (string.IsNullOrWhiteSpace(keyValue))
             {
-                AuthFilterHelpers.RedirectToSignIn(context);
+                AuthFilterHelpers.SetJsonAuthFailure(context, "jwt", "JWT configuration is missing.");
                 return;
             }
 

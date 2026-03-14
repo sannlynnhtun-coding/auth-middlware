@@ -1,48 +1,59 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" class="h-full">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - AuthMiddlware</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] - Auth Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #071129;
+            --sky: #ecf4ff;
+            --mist: #f8fbff;
+            --brand: #0c65f8;
+            --good: #0f766e;
+            --warn: #f59e0b;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--ink);
+            background: radial-gradient(circle at 20% 0%, #dbeafe 0%, #f8fbff 45%, #f0f7ff 100%);
+        }
+
+        .mono {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+    </style>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AuthMiddlware.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">AuthMiddlware</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2023 - AuthMiddlware - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+<body class="min-h-screen">
+    <header class="border-b border-slate-200/60 bg-white/80 backdrop-blur">
+        <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+            <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">A</span>
+                Auth Learning Lab
+            </a>
+            <nav class="flex items-center gap-2 text-sm font-medium">
+                <a asp-controller="Home" asp-action="Index" class="rounded-full px-3 py-1.5 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700">Dashboard</a>
+                <a asp-controller="Home" asp-action="Privacy" class="rounded-full px-3 py-1.5 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700">Guide</a>
+                <a asp-controller="SignIn" asp-action="Index" class="rounded-full bg-blue-600 px-3 py-1.5 text-white transition hover:bg-blue-700">Run Demo</a>
+            </nav>
         </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+        @RenderBody()
+    </main>
+
+    <footer class="border-t border-slate-200/70 bg-white/70 py-4 text-center text-xs text-slate-600">
+        Beginner auth demo with controller attributes + JWT claims visibility.
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

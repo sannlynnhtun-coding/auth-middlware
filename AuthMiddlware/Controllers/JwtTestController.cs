@@ -21,7 +21,13 @@ namespace AuthMiddlware.Controllers
         [HttpGet]
         public IActionResult Protected()
         {
-            return Ok("JWT protected OK");
+            return Ok(new
+            {
+                success = true,
+                filter = "jwt",
+                message = "JWT filter check passed.",
+                timestampUtc = DateTime.UtcNow
+            });
         }
 
         [AllowAnonymous]
@@ -33,7 +39,13 @@ namespace AuthMiddlware.Controllers
             var keyValue = _configuration["Jwt:Key"];
             if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience) || string.IsNullOrWhiteSpace(keyValue))
             {
-                return BadRequest("JWT config is missing.");
+                return BadRequest(new
+                {
+                    success = false,
+                    filter = "jwt",
+                    message = "JWT config is missing.",
+                    timestampUtc = DateTime.UtcNow
+                });
             }
 
             var key = Encoding.ASCII.GetBytes(keyValue);
@@ -60,7 +72,13 @@ namespace AuthMiddlware.Controllers
             var options = new CookieOptions { Expires = DateTime.Now.AddMinutes(1) };
             Response.Cookies.Append("jwt_token", jwtToken, options);
 
-            return Ok("JWT setup complete");
+            return Ok(new
+            {
+                success = true,
+                filter = "jwt",
+                message = "JWT setup complete.",
+                timestampUtc = DateTime.UtcNow
+            });
         }
     }
 }

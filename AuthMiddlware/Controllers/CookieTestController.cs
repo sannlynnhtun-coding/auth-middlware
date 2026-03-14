@@ -10,7 +10,13 @@ namespace AuthMiddlware.Controllers
         [HttpGet]
         public IActionResult Protected()
         {
-            return Ok("Cookie protected OK");
+            return Ok(new
+            {
+                success = true,
+                filter = "cookie",
+                message = "Cookie filter check passed.",
+                timestampUtc = DateTime.UtcNow
+            });
         }
 
         [AllowAnonymous]
@@ -19,7 +25,14 @@ namespace AuthMiddlware.Controllers
         {
             var options = new CookieOptions { Expires = DateTime.Now.AddMinutes(1) };
             Response.Cookies.Append("email", "cookie-test@example.com", options);
-            return Ok("Cookie setup complete");
+
+            return Ok(new
+            {
+                success = true,
+                filter = "cookie",
+                message = "Cookie setup complete.",
+                timestampUtc = DateTime.UtcNow
+            });
         }
     }
 }
